@@ -20,6 +20,9 @@ def construir_grafo_desde_csv(distances_df: pd.DataFrame):
 
 
 def shortest_path(graph, origin, destination):
+    if origin not in graph or destination not in graph:
+        return None
+
     distances = {city: float('inf') for city in graph}
     distances[origin] = 0
     visited = set()
@@ -52,6 +55,9 @@ def shortest_path(graph, origin, destination):
 
 
 def shortest_path_route(graph, origin, destination):
+    if origin not in graph or destination not in graph:
+        return None
+
     distances = {city: float('inf') for city in graph}
     previous = {city: None for city in graph}
     distances[origin] = 0
