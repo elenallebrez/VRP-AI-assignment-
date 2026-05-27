@@ -1,41 +1,41 @@
 import pandas as pd
 from sklearn.neighbors import KNeighborsClassifier
 
-def asignar_oficinas(packaging: pd.DataFrame, oficinas_coordenadas: pd.DataFrame, k: int = 1) -> pd.DataFrame:
+
+def _validar_columnas(df: pd.DataFrame, columnas: set[str], nombre: str) -> None:
+    faltantes = columnas - set(df.columns)
+    if faltantes:
+        raise ValueError(f"{nombre} no contiene las columnas requeridas: {sorted(faltantes)}")
+
+
+def _validar_coordenadas(df: pd.DataFrame, columnas: list[str], nombre: str) -> None:
+    if df[columnas].isnull().any().any():
+        raise ValueError(f"{nombre} contiene coordenadas nulas.")
+
+
+def asignar_oficinas(paquetes: pd.DataFrame, oficinas_coordenadas: pd.DataFrame, k: int = 1) -> pd.DataFrame:
     """
-    Asigna cada paquete a la oficina más cercana usando KNN.
-    Compatible con el grafo de graph_utils y normalizado para evitar KeyErrors.
+    Asigna cada paquete a la oficina mas cercana usando KNN con k=1.
 
-    Parámetros
-    ----------
-    packaging : pd.DataFrame
-        DataFrame con columnas ['latitud', 'longitud'] de los paquetes.
-    oficinas_coordenadas : pd.DataFrame
-        DataFrame con columnas ['latitud', 'longitud', 'ciudad'] de las oficinas.
-    k : int, opcional
-        Número de vecinos a considerar en KNN. Default=1.
-
-    Retorna
-    -------
-    packaging : pd.DataFrame
-        DataFrame con nueva columna 'oficina_asignada' en mayúsculas.
+    En este proyecto, KNN se usa como nearest-office assignment:
+    `oficina_asignada` representa la oficina/delegacion de recogida.
     """
-    # Normalizar nombres de oficinas (compatibles con utils)
-    oficinas_coordenadas = oficinas_coordenadas.copy()
-    oficinas_coordenadas['ciudad'] = oficinas_coordenadas['ciudad'].astype(str).str.strip().str.upper()
+    _validar_columnas(paquetes, {"latitud", "longitud"}, "paquetes")
+    _validar_columnas(oficinas_coordenadas, {"ciudad", "latitud", "longitud"}, "oficinas_coordenadas")
+    _validar_coordenadas(paquetes, ["latitud", "longitud"], "paquetes")
+    _validar_coordenadas(oficinas_coordenadas, ["latitud", "longitud"], "oficinas_coordenadas")
 
-    # Entrenar KNN con coordenadas de oficinas
-    X_train = oficinas_coordenadas[['latitud', 'longitud']]
-    y_train = oficinas_coordenadas['ciudad']
+    if k != 1:
+        raise ValueError("Este proyecto usa k=1 para asignar la oficina mas cercana.")
+
+    oficinas = oficinas_coordenadas.copy()
+    oficinas["ciudad"] = oficinas["ciudad"].astype(str).str.strip().str.upper()
+
     knn = KNeighborsClassifier(n_neighbors=k)
-    knn.fit(X_train, y_train)
+    knn.fit(oficinas[["latitud", "longitud"]], oficinas["ciudad"])
 
-    # Predecir oficina para cada paquete
-    X_test = packaging[['latitud', 'longitud']]
-    packaging = packaging.copy()
-    packaging['oficina_asignada'] = knn.predict(X_test)
+    paquetes = paquetes.copy()
+    paquetes["oficina_asignada"] = knn.predict(paquetes[["latitud", "longitud"]])
+    paquetes["oficina_asignada"] = paquetes["oficina_asignada"].astype(str).str.strip().str.upper()
 
-    # Normalizar resultado para que coincida con graph_utils (en minúsculas solo al usar rutas)
-    packaging['oficina_asignada'] = packaging['oficina_asignada'].astype(str).str.strip().str.upper()
-
-    return packaging
+    return paquetes
