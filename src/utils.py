@@ -1,64 +1,56 @@
+from pathlib import Path
+
 import pandas as pd
 
-def convertir_a_float(col: pd.Series) -> pd.Series:
-    """
-    Convierte una columna de strings con comas decimales a float.
-    """
-    return col.astype(str).str.replace(',', '.', regex=False).astype(float)
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_DATA_DIR = PROJECT_ROOT / "data"
 
 
-def cargar_datos():
-    """
-    Carga los datos desde la carpeta 'data' y devuelve los DataFrames procesados.
+def convertir_a_float(columna: pd.Series) -> pd.Series:
+    """Convierte strings con coma decimal a float."""
+    return columna.astype(str).str.replace(",", ".", regex=False).astype(float)
 
-    Retorna
-    -------
-    paquetes : pd.DataFrame
-        Paquetes con columnas ['id', 'size', 'prioridad', 'destino', 'latitud', 'longitud'].
-    vehicules : pd.DataFrame
-        Vehículos con columnas ['id', 'size', 'initial'].
-    oficinas_coordenadas : pd.DataFrame
-        Oficinas con columnas ['ciudad', 'latitud', 'longitud'].
-    distancias_ciudades : pd.DataFrame
-        Distancias entre ciudades con columnas ['origen', 'destino', 'Distance(km)'].
+
+def cargar_datos(data_dir=DEFAULT_DATA_DIR):
     """
-    # Cargar CSVs
+    Carga los CSV del proyecto.
+
+    `data_dir` permite ejecutar el proyecto desde cualquier directorio.
+    """
+    data_dir = Path(data_dir)
+
     paquetes = pd.read_csv(
-        "data/paquetes.csv",
+        data_dir / "paquetes.csv",
         header=0,
-        names=['id', 'size', 'prioridad', 'destino', 'latitud', 'longitud']
+        names=["id", "size", "prioridad", "destino", "latitud", "longitud"],
     )
-
-    vehicules = pd.read_csv(
-        "data/vehiculos_csv.csv",
+    vehiculos = pd.read_csv(
+        data_dir / "vehiculos_csv.csv",
         header=0,
-        names=['id', 'size', 'initial']
+        names=["id", "size", "initial"],
     )
-
     oficinas_coordenadas = pd.read_csv(
-        "data/ciudades_coordenadas.csv",
+        data_dir / "ciudades_coordenadas.csv",
         header=0,
-        names=['ciudad', 'latitud', 'longitud']
+        names=["ciudad", "latitud", "longitud"],
     )
-
     distancias_ciudades = pd.read_csv(
-        "data/distancia_ciudades.csv",
+        data_dir / "distancia_ciudades.csv",
         header=0,
-        names=['origen', 'destino', 'Distance(km)']
+        names=["origen", "destino", "Distance(km)"],
     )
 
-    # Conversión de coordenadas
-    paquetes['latitud'] = convertir_a_float(paquetes['latitud'])
-    paquetes['longitud'] = convertir_a_float(paquetes['longitud'])
-    oficinas_coordenadas['latitud'] = convertir_a_float(oficinas_coordenadas['latitud'])
-    oficinas_coordenadas['longitud'] = convertir_a_float(oficinas_coordenadas['longitud'])
+    paquetes["latitud"] = convertir_a_float(paquetes["latitud"])
+    paquetes["longitud"] = convertir_a_float(paquetes["longitud"])
+    oficinas_coordenadas["latitud"] = convertir_a_float(oficinas_coordenadas["latitud"])
+    oficinas_coordenadas["longitud"] = convertir_a_float(oficinas_coordenadas["longitud"])
 
-    # Normalización de strings a minúsculas y sin espacios
-    vehicules['initial'] = vehicules['initial'].astype(str).str.strip().str.lower()
-    oficinas_coordenadas['ciudad'] = oficinas_coordenadas['ciudad'].astype(str).str.strip().str.lower()
-    paquetes['destino'] = paquetes['destino'].astype(str).str.strip().str.lower()
+    vehiculos["initial"] = vehiculos["initial"].astype(str).str.strip().str.lower()
+    oficinas_coordenadas["ciudad"] = oficinas_coordenadas["ciudad"].astype(str).str.strip().str.lower()
+    paquetes["destino"] = paquetes["destino"].astype(str).str.strip().str.lower()
 
-    if 'oficina_asignada' in paquetes.columns:
-        paquetes['oficina_asignada'] = paquetes['oficina_asignada'].astype(str).str.strip().str.lower()
+    if "oficina_asignada" in paquetes.columns:
+        paquetes["oficina_asignada"] = paquetes["oficina_asignada"].astype(str).str.strip().str.lower()
 
-    return paquetes, vehicules, oficinas_coordenadas, distancias_ciudades
+    return paquetes, vehiculos, oficinas_coordenadas, distancias_ciudades
